@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SUPCORRECT</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}">
+</head>
+<body>
+  <header><a href="{{ url_for('web.dashboard') }}">SUPCORRECT</a>{% if session.user_id %}<form method="post" action="{{ url_for('web.logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token() }}"><button type="submit">Deconnexion</button></form>{% endif %}</header>
+  <main>
+    {% with messages = get_flashed_messages() %}{% if messages %}<ul class="messages">{% for message in messages %}<li>{{ message }}</li>{% endfor %}</ul>{% endif %}{% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+</body>
+</html>

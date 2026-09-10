@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+: "${MYSQL_ROOT_PASSWORD:?Set MYSQL_ROOT_PASSWORD in the shell.}"
+: "${REPLICATION_PASSWORD:?Set REPLICATION_PASSWORD in the shell.}"
+: "${PRIMARY_HOST:?Set PRIMARY_HOST, for example 10.0.0.21.}"
+
+mysql -u root "-p${MYSQL_ROOT_PASSWORD}" <<SQL
+STOP SLAVE;
+CHANGE MASTER TO
+  MASTER_HOST='${PRIMARY_HOST}',
+  MASTER_USER='supcorrect_repl',
+  MASTER_PASSWORD='${REPLICATION_PASSWORD}',
+  MASTER_USE_GTID=slave_pos;
+START SLAVE;
+SHOW SLAVE STATUS\G
+SQL

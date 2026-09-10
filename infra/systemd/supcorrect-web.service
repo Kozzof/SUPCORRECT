@@ -1,0 +1,21 @@
+[Unit]
+Description=SUPCORRECT Flask web application
+After=network.target
+
+[Service]
+User=supcorrect-web
+Group=supcorrect-web
+WorkingDirectory=/opt/supcorrect
+EnvironmentFile=/etc/supcorrect/app.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/supcorrect/venv/bin/gunicorn --workers 2 --bind 127.0.0.1:8000 'app.supcorrect:create_app()'
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/supcorrect/instance
+
+[Install]
+WantedBy=multi-user.target

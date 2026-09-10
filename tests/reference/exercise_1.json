@@ -1,0 +1,10 @@
+{
+  "title": "Somme de deux entiers",
+  "contract": "Le programme recoit deux entiers en arguments et affiche leur somme suivie d'un retour ligne. La sortie est comparee au programme de reference du meme langage.",
+  "cases": [
+    {"args": ["1", "2"]},
+    {"args": ["-4", "9"]},
+    {"args": ["0", "0"]},
+    {"args": ["123", "456"]}
+  ]
+}

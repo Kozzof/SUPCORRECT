@@ -1,0 +1,7 @@
+# Sécurité du correcteur
+
+Le fichier est limité à 64 Ko, validé par extension et renommé côté serveur. Les valeurs de cours, exercice et langage sont contrôlées contre la base. Les commandes du correcteur sont construites depuis une liste blanche, jamais depuis une chaîne fournie par l'étudiant, et `shell=True` est interdit.
+
+Le worker tourne sous le compte `grader`, sans sudo ni shell interactif. Le service systemd lui donne seulement le répertoire de travail et les références en lecture. Chaque exécution applique un timeout de deux secondes, une limite de 128 Mo, 16 processus et 64 Ko de sortie par flux. Les sorties sont dirigées vers des fichiers temporaires bornés, et le groupe de processus entier est tué au timeout. `bubblewrap` est obligatoire sur l'hôte Linux : sans lui, le job est différé avec le code `sandbox_unavailable`. Il crée des namespaces réseau et PID, vide l'environnement puis ne monte que `/usr`, les bibliothèques système présentes et le répertoire temporaire dédié.
+
+Après une correction effective, la source est effacée de la base et le répertoire temporaire est détruit. Une panne technique conserve la source jusqu'à la reprise ou au traitement administratif de l'échec final. Les sorties et erreurs de compilation ne sont pas renvoyées telles quelles aux utilisateurs. Les secrets sont lus depuis `/etc/supcorrect/app.env`, avec permissions `0640` et groupe applicatif seulement.

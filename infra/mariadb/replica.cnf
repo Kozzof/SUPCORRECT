@@ -1,0 +1,9 @@
+[mysqld]
+server_id=2
+relay_log=supcorrect-relay-bin
+log_bin=supcorrect-bin
+binlog_format=ROW
+gtid_strict_mode=ON
+log_slave_updates=ON
+read_only=ON
+bind_address=0.0.0.0

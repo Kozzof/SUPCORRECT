@@ -1,0 +1,10 @@
+{
+  "title": "Maximum de trois entiers",
+  "contract": "Le programme recoit trois entiers en arguments et affiche le plus grand suivi d'un retour ligne. La sortie est comparee au programme de reference du meme langage.",
+  "cases": [
+    {"args": ["1", "2", "3"]},
+    {"args": ["9", "2", "3"]},
+    {"args": ["-1", "-8", "-3"]},
+    {"args": ["7", "7", "2"]}
+  ]
+}

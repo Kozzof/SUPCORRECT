@@ -1,0 +1,8 @@
+[mysqld]
+server_id=1
+log_bin=supcorrect-bin
+binlog_format=ROW
+gtid_strict_mode=ON
+log_slave_updates=ON
+bind_address=0.0.0.0
+expire_logs_days=7
