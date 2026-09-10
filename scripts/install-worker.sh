@@ -9,7 +9,7 @@ fi
 project_root=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 
 apt-get update
-apt-get install -y bubblewrap build-essential python3 python3-venv python3-pip
+apt-get install -y bubblewrap build-essential util-linux python3 python3-venv python3-pip
 id -u grader >/dev/null 2>&1 || useradd --system --home /nonexistent --shell /usr/sbin/nologin grader
 install -d -o grader -g grader -m 0700 /var/lib/supcorrect/work /var/lib/supcorrect/instance
 install -d -m 0755 /opt/supcorrect /etc/supcorrect

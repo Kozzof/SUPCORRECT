@@ -104,11 +104,12 @@ def run_case(command, args, workdir):
 
 
 def sandboxed_command(command, workdir):
-    """Runs student code in an empty network namespace on the Linux target."""
+    """Run code through Bubblewrap with limits inherited from prlimit."""
     if os.name != "posix":
         raise GraderError("unsupported_host")
     bwrap = shutil.which("bwrap")
-    if not bwrap:
+    prlimit = shutil.which("prlimit")
+    if not bwrap or not prlimit:
         raise GraderError("sandbox_unavailable")
     mounts = []
     for directory in ("/usr", "/lib", "/lib64"):
@@ -116,8 +117,29 @@ def sandboxed_command(command, workdir):
             mounts.extend(["--ro-bind", directory, directory])
     mounts.extend(["--proc", "/proc", "--dev", "/dev", "--tmpfs", "/tmp", "--bind", str(workdir), "/work", "--chdir", "/work"])
     rewritten = [str(value).replace(str(workdir), "/work") for value in command]
-    limits = ["--rlimit-as", str(128 * 1024 * 1024), "--rlimit-fsize", str(MAX_OUTPUT_BYTES), "--rlimit-nproc", "16"]
-    return [bwrap, "--die-with-parent", "--unshare-net", "--unshare-pid", "--new-session", "--clearenv", "--setenv", "PATH", "/usr/bin:/bin", "--setenv", "LANG", "C", "--setenv", "LC_ALL", "C"] + limits + mounts + ["--"] + rewritten
+    # Bubblewrap has no --rlimit-* options.  prlimit applies kernel-enforced
+    # limits before it execs bwrap, so both bwrap and the submitted process
+    # receive them without unsafe preexec_fn calls from grading threads.
+    limits = [
+        prlimit,
+        f"--as={128 * 1024 * 1024}",
+        f"--fsize={MAX_OUTPUT_BYTES}",
+        "--nproc=16",
+        "--",
+    ]
+    return limits + [bwrap, "--die-with-parent", "--unshare-net", "--unshare-pid", "--new-session", "--clearenv", "--setenv", "PATH", "/usr/bin:/bin", "--setenv", "LANG", "C", "--setenv", "LC_ALL", "C"] + mounts + ["--"] + rewritten
+
+
+def verify_sandbox(workdir):
+    """Fail technically before compiling when this host cannot launch bwrap."""
+    try:
+        returncode, _, _, timed_out = execute_limited(
+            sandboxed_command(["/usr/bin/true"], workdir), workdir, timeout=2
+        )
+    except OSError as error:
+        raise GraderError("sandbox_unavailable") from error
+    if timed_out or returncode != 0:
+        raise GraderError("sandbox_unavailable")
 
 
 def prepare_program(language, source_path, sandbox_dir, error_code):
@@ -148,6 +170,9 @@ def grade_submission(submission, reference_dir):
         reference_dir = workdir / "reference"
         candidate_dir.mkdir()
         reference_dir.mkdir()
+        # This has no student-controlled stderr.  It separates a broken
+        # launcher/configuration from a genuine compiler diagnostic.
+        verify_sandbox(candidate_dir)
         extension = ".c" if submission["language"] == "c" else ".py"
         source_path = candidate_dir / f"submission{extension}"
         source_path.write_text(submission["source_code"], encoding="utf-8")

@@ -6,7 +6,7 @@ Projet de correction automatique de programmes C et Python. Les soumissions pass
 
 Prérequis : Python 3.12 ou plus récent.
 
-Depuis le dossier extrait de l'archive :
+Depuis la racine du projet :
 
 ```powershell
 python -m venv .venv
@@ -24,6 +24,10 @@ Le worker réel exige Linux, `bubblewrap`, `gcc` et Python. Sous Windows, utilis
 ```
 
 Le mode local utilise SQLite. La cible de livraison utilise MariaDB et les configurations de `infra/`. Le chargement de `.env` est assuré par `python-dotenv`.
+
+## Contenu du dépôt
+
+Ce dépôt contient le code source, les tests, les scripts d'installation et la documentation technique du projet. Les archives de livraison, environnements locaux, bases SQLite générées et fichiers de travail personnels sont exclus.
 
 ## Arborescence
 

@@ -38,9 +38,10 @@ class WorkerLogicTest(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as work_root:
             with patch.dict("os.environ", {"GRADER_WORKDIR": work_root}):
-                with patch("app.supcorrect.worker.prepare_program", side_effect=fake_prepare):
-                    with patch("app.supcorrect.worker.run_case", side_effect=fake_run):
-                        score, result = grade_submission(self.submission, self.references)
+                with patch("app.supcorrect.worker.verify_sandbox"):
+                    with patch("app.supcorrect.worker.prepare_program", side_effect=fake_prepare):
+                        with patch("app.supcorrect.worker.run_case", side_effect=fake_run):
+                            score, result = grade_submission(self.submission, self.references)
 
         self.assertEqual(result, "ok")
         self.assertEqual(score, 75)
@@ -64,14 +65,26 @@ class WorkerLogicTest(unittest.TestCase):
         self.assertIn(["--ro-bind", "/usr", "/usr"], [command[index:index + 3] for index in range(len(command) - 2)])
         self.assertIn(["--ro-bind", "/lib", "/lib"], [command[index:index + 3] for index in range(len(command) - 2)])
         self.assertIn("--unshare-pid", command)
+        self.assertIn("--as=134217728", command)
+        self.assertNotIn("--rlimit-as", command)
+
+    def test_sandbox_preflight_marks_an_unlaunchable_bubblewrap_as_technical(self):
+        with tempfile.TemporaryDirectory() as work_root:
+            with patch.dict("os.environ", {"GRADER_WORKDIR": work_root}):
+                with patch("app.supcorrect.worker.sandboxed_command", return_value=["bwrap", "--", "/usr/bin/true"]):
+                    with patch("app.supcorrect.worker.execute_limited", return_value=(1, "", "bwrap: permission denied", False)):
+                        with self.assertRaises(GraderError) as error:
+                            grade_submission(self.submission, self.references)
+        self.assertEqual(str(error.exception), "sandbox_unavailable")
 
     def test_system_launch_error_is_technical_error(self):
         with tempfile.TemporaryDirectory() as work_root:
             with patch.dict("os.environ", {"GRADER_WORKDIR": work_root}):
-                with patch("app.supcorrect.worker.prepare_program", return_value=["program"]):
-                    with patch("app.supcorrect.worker.run_case", side_effect=OSError("launch failed")):
-                        with self.assertRaises(GraderError) as error:
-                            grade_submission(self.submission, self.references)
+                with patch("app.supcorrect.worker.verify_sandbox"):
+                    with patch("app.supcorrect.worker.prepare_program", return_value=["program"]):
+                        with patch("app.supcorrect.worker.run_case", side_effect=OSError("launch failed")):
+                            with self.assertRaises(GraderError) as error:
+                                grade_submission(self.submission, self.references)
         self.assertEqual(str(error.exception), "execution_error")
 
     def test_student_stderr_does_not_trigger_sandbox_error(self):
