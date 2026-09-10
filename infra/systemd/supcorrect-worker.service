@@ -1,0 +1,28 @@
+[Unit]
+Description=SUPCORRECT correction worker
+After=network.target mariadb.service
+
+[Service]
+User=grader
+Group=grader
+WorkingDirectory=/opt/supcorrect
+EnvironmentFile=/etc/supcorrect/app.env
+Environment=PYTHONDONTWRITEBYTECODE=1
+ExecStart=/opt/supcorrect/venv/bin/python -m app.supcorrect.worker
+Restart=always
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryMax=256M
+TasksMax=64
+ReadOnlyPaths=/opt/supcorrect/tests/reference
+ReadWritePaths=/var/lib/supcorrect/work /var/lib/supcorrect/instance
+
+[Install]
+WantedBy=multi-user.target
